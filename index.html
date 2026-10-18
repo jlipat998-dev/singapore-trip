@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Сингапур, 24–26 октября</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: одна колонка-«посадочный талон»; липкие вкладки по дням; каждый день — лента времени с цветными метками линий MRT */
+:root {
+  --bg: #f2f5f4;
+  --surface: #ffffff;
+  --fg: #142320;
+  --muted: #5b6b67;
+  --line: #d6dfdc;
+  --accent: #b0246c;      /* орхидея */
+  --accent-soft: #f8e4ee;
+  --green: #0f6b60;       /* сады */
+  --green-soft: #e0f0ec;
+  --warn: #8a5300;
+  --warn-soft: #fbefd9;
+  /* настоящие цвета линий MRT */
+  --ew: #009645; --dt: #005ec4; --te: #9d5b25; --cg: #009645;
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Golos Text", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1513; --surface: #15211e; --fg: #e4ece9; --muted: #98aaa5; --line: #263532;
+    --accent: #f27bb6; --accent-soft: #3a1a2a; --green: #5cc7b5; --green-soft: #15302b;
+    --warn: #f0b860; --warn-soft: #33270f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1513; --surface: #15211e; --fg: #e4ece9; --muted: #98aaa5; --line: #263532;
+  --accent: #f27bb6; --accent-soft: #3a1a2a; --green: #5cc7b5; --green-soft: #15302b;
+  --warn: #f0b860; --warn-soft: #33270f; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+}
+.wrap { max-width: 720px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* Шапка */
+.top { display: grid; gap: 6px; padding-block: 8px 18px; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 7vw, 40px); line-height: 1.1; }
+h1 span { color: var(--accent); }
+.sub { color: var(--muted); }
+
+/* Рейсы — «посадочный талон» */
+.flights { display: grid; gap: 10px; margin-bottom: 18px; }
+.pass {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px 16px; position: relative;
+}
+.pass::before, .pass::after {
+  content: ""; position: absolute; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--bg); border: 1px solid var(--line); top: 50%; transform: translateY(-50%);
+}
+.pass::before { left: -8px; clip-path: inset(0 0 0 50%); }
+.pass::after { right: -8px; clip-path: inset(0 50% 0 0); }
+.pass .dir { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.pass .route { font-family: var(--font-display); font-weight: 500; font-size: 18px; }
+.pass .code { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--accent); text-align: right; }
+.pass .meta { grid-column: 1 / -1; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.pass .meta b { color: var(--fg); font-weight: 600; }
+.tickets { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+  font: 500 14px/1 var(--font-body); color: var(--accent); background: var(--accent-soft);
+  padding: 9px 12px; border-radius: 999px; border: 0;
+}
+.note-inline { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+
+/* Вкладки: радиокнопки + CSS, работают даже там, где скрипты отключены (просмотр файла в мессенджере) */
+.tab-radio { position: absolute; opacity: 0; pointer-events: none; }
+.tabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  background: var(--bg); padding-block: 8px; margin-bottom: 8px;
+}
+.tab {
+  font: 600 14px/1.2 var(--font-body); color: var(--muted); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 4px; cursor: pointer;
+  display: grid; gap: 2px; justify-items: center; text-align: center;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.tab small { font-weight: 500; font-size: 11px; letter-spacing: .04em; }
+.panel { display: none; }
+#r-d24:checked ~ .tabs label[for="r-d24"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+#r-d24:checked ~ #d24 { display: block; }
+#r-d25:checked ~ .tabs label[for="r-d25"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+#r-d25:checked ~ #d25 { display: block; }
+#r-d26:checked ~ .tabs label[for="r-d26"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+#r-d26:checked ~ #d26 { display: block; }
+#r-info:checked ~ .tabs label[for="r-info"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+#r-info:checked ~ #info { display: block; }
+#r-d24:focus-visible ~ .tabs label[for="r-d24"] { outline: 3px solid var(--accent); outline-offset: 2px; }
+#r-d25:focus-visible ~ .tabs label[for="r-d25"] { outline: 3px solid var(--accent); outline-offset: 2px; }
+#r-d26:focus-visible ~ .tabs label[for="r-d26"] { outline: 3px solid var(--accent); outline-offset: 2px; }
+#r-info:focus-visible ~ .tabs label[for="r-info"] { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* День */
+.day-head { display: grid; gap: 4px; padding-block: 14px 10px; }
+.day-head h2 { font-family: var(--font-display); font-weight: 700; font-size: 24px; }
+.day-head p { margin: 0; color: var(--muted); }
+
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+.step { display: grid; grid-template-columns: 58px 1fr; gap: 12px; padding-block: 14px; border-top: 1px solid var(--line); }
+.time { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; padding-top: 2px; }
+.time small { display: block; font-weight: 500; color: var(--muted); font-size: 12px; }
+.body { min-width: 0; display: grid; gap: 6px; }
+.body h3 { font-size: 17px; font-weight: 600; }
+.body p { margin: 0; }
+.body ul { margin: 0; padding-left: 18px; }
+.muted { color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--green-soft); color: var(--green); }
+.chip.paid { background: var(--warn-soft); color: var(--warn); }
+.chip.key { background: var(--accent-soft); color: var(--accent); }
+.map { font-size: 14px; font-weight: 500; text-decoration: none; }
+.map::before { content: "↗ "; }
+.site { font-size: 14px; font-weight: 500; text-decoration: none; }
+.site::before { content: "⌂ "; }
+
+/* Маршрут MRT */
+.mrt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; }
+.stn { display: inline-flex; align-items: center; gap: 6px; }
+.stn code {
+  font: 700 11px/1 var(--font-body); color: #fff; padding: 4px 6px; border-radius: 5px; letter-spacing: .02em;
+}
+.ew code { background: var(--ew); } .dt code { background: var(--dt); } .te code { background: var(--te); } .cg code { background: var(--cg); }
+.arrow { color: var(--muted); }
+
+/* Варианты на выбор */
+.choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 4px; }
+.opt { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.opt .tag { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.opt h3 { font-size: 17px; }
+
+.callout { background: var(--warn-soft); color: var(--fg); border-radius: var(--radius); padding: 12px 14px; font-size: 15px; }
+.callout b { color: var(--warn); }
+
+/* Карточка гида */
+.guide { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.guide-who { display: grid; gap: 2px; min-width: 0; }
+.guide-name { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.guide-phone { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; user-select: all; -webkit-user-select: all; }
+.guide-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.wa { background: var(--green-soft); color: var(--green); }
+
+/* Полезное */
+.info { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 8px; }
+.card h3 { font-size: 17px; font-weight: 600; }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.card p { margin: 0; }
+dl.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+dl.kv dt { font-weight: 600; white-space: nowrap; }
+dl.kv dd { margin: 0; min-width: 0; }
+.foot { margin-top: 28px; font-size: 13px; color: var(--muted); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel { animation: fade .2s ease-out; }
+  @keyframes fade { from { opacity: .4; } to { opacity: 1; } }
+}
+</style>
+
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Памятка в дорогу · 2 дня</div>
+  <h1>Сингапур, <span>24–26</span> октября</h1>
+  <div class="sub">Отель Carlton City Hotel Singapore, 1 Gopeng Street (Tanjong Pagar) · <a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Carlton+City+Hotel+Singapore">на карте</a> <a class="site" href="https://www.carltoncity.sg/">сайт</a></div>
+</header>
+
+<section class="flights" aria-label="Рейсы">
+  <div class="pass">
+    <div class="dir">Прилёт · сб, 24 октября</div>
+    <div class="code">TK208</div>
+    <div class="route">Стамбул → Сингапур</div>
+    <div></div>
+    <div class="meta">Прилёт в <b>09:30</b>, Changi <b>Терминал 1</b> · Turkish Airlines · багаж 25 кг</div>
+    <div class="note-inline">Билеты — в файле singapore.html, который вам переслали.</div>
+  </div>
+  <div class="pass">
+    <div class="dir">Вылет · пн, 26 октября</div>
+    <div class="code">TR606</div>
+    <div class="route">Сингапур → Бангкок</div>
+    <div></div>
+    <div class="meta">Вылет в <b>09:20</b>, Changi <b>Терминал 1</b>, стойки Scoot ряды 5–7 · багаж 20 кг сдать до <b>08:20</b></div>
+    <div class="note-inline">Билеты — в файле singapore.html, который вам переслали.</div>
+  </div>
+</section>
+
+<input class="tab-radio" type="radio" name="day" id="r-d24" checked>
+<input class="tab-radio" type="radio" name="day" id="r-d25">
+<input class="tab-radio" type="radio" name="day" id="r-d26">
+<input class="tab-radio" type="radio" name="day" id="r-info">
+<nav class="tabs" aria-label="Дни поездки">
+  <label class="tab" for="r-d24">24 <small>СБ</small></label>
+  <label class="tab" for="r-d25">25 <small>ВС</small></label>
+  <label class="tab" for="r-d26">26 <small>ПН</small></label>
+  <label class="tab" for="r-info">Инфо <small>ВАЖНОЕ</small></label>
+</nav>
+
+<!-- ===== 24 октября ===== -->
+<section class="panel" id="d24">
+  <div class="day-head">
+    <div class="eyebrow">24 октября · суббота</div>
+    <h2>Прилёт, водопад и сады</h2>
+    <p>Jewel в аэропорту, обед у отеля, супердеревья днём, вечером шоу на воде.</p>
+  </div>
+  <ol class="timeline">
+    <li class="step">
+      <div class="time">09:30</div>
+      <div class="body">
+        <h3>Прилёт TK208, Терминал 1</h3>
+        <p>Паспортный контроль через автоматические ворота (нужна заполненная SG Arrival Card), затем получение багажа.</p>
+        <p class="muted">Сразу после посадки: включить eSIM в настройках телефона (купленную заранее). В зале прилёта купить карту EZ-Link и разменять немного наличных (см. «Инфо»).</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">10:30<small>~2 часа</small></div>
+      <div class="body">
+        <h3>Jewel Changi и водопад Rain Vortex</h3>
+        <p>Самый высокий крытый водопад в мире, 40 метров. Вокруг тропический лес Shiseido Forest Valley с тропинками на нескольких уровнях. Из Т1 в Jewel ведёт переход, идти несколько минут.</p>
+        <p class="muted">Чемоданы можно сдать в камеру хранения (Baggage Storage) в зале прилёта Т1 или катить с собой. Водопад по выходным работает с 10:00.</p>
+        <div class="row"><span class="chip">бесплатно</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=HSBC+Rain+Vortex+Jewel+Changi">Rain Vortex на карте</a> <a class="site" href="https://www.jewelchangiairport.com/en/attractions/rain-vortex.html">сайт</a></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">12:30<small>~30 мин</small></div>
+      <div class="body">
+        <h3>В отель на такси</h3>
+        <p>С багажом удобнее такси из очереди у выхода Т1 или Grab. Ехать около 25 минут, примерно S$25–35. На метро дешевле (около S$2), но получится около часа с пересадкой:</p>
+        <div class="mrt">
+          <span class="stn cg"><code>CG2</code>Changi Airport</span><span class="arrow">→</span>
+          <span class="stn ew"><code>EW4</code>Tanah Merah</span><span class="arrow">→</span>
+          <span class="stn ew"><code>EW15</code>Tanjong Pagar</span>
+        </div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">13:15</div>
+      <div class="body">
+        <h3>Отель: оставить вещи</h3>
+        <p>Заселение обычно с 15:00, но чемоданы примут на хранение сразу.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">13:45</div>
+      <div class="body">
+        <h3>Обед: Maxwell Food Centre</h3>
+        <p>5–7 минут пешком от отеля. Главное блюдо здесь курица по-хайнаньски (chicken rice), самая известная очередь к Tian Tian.</p>
+        <div class="row"><span class="chip">S$5–8 за блюдо</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Maxwell+Food+Centre">на карте</a></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">15:00<small>~10 мин</small></div>
+      <div class="body">
+        <h3>Метро до садов</h3>
+        <div class="mrt">
+          <span class="stn te"><code>TE18</code>Maxwell</span><span class="arrow">→</span>
+          <span class="stn te"><code>TE22</code>Gardens by the Bay</span>
+        </div>
+        <p class="muted">Коричневая линия, без пересадок.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">15:15<small>~3 часа</small></div>
+      <div class="body">
+        <h3>Gardens by the Bay: Supertree Grove</h3>
+        <p>Те самые «деревья из Аватара», металлические конструкции высотой 25–50 м, покрытые живыми растениями. Днём их хорошо видно и удобно фотографировать. Потом прогулка вдоль озера Dragonfly Lake.</p>
+        <p class="muted">По желанию можно пройти по подвесному мосту OCBC Skyway между деревьями на высоте 22 м (около S$14). Оранжереи сегодня пропускаем, они в варианте на 25-е.</p>
+        <div class="row"><span class="chip">вход в парк бесплатный</span><span class="chip paid">Skyway платно</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Supertree+Grove+Singapore">на карте</a> <a class="site" href="https://www.gardensbythebay.com.sg/en/things-to-do/attractions/supertree-grove.html">сайт</a></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">18:30</div>
+      <div class="body">
+        <h3>Ужин: Satay by the Bay</h3>
+        <p>Хокер-центр прямо в садах. Сатай (шашлычки), жареная лапша, морепродукты.</p>
+        <div class="row"><span class="chip">S$6–10 за блюдо</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Satay+by+the+Bay">на карте</a> <a class="site" href="https://www.sataybythebay.com.sg/">сайт</a></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">19:30<small>~20 мин</small></div>
+      <div class="body">
+        <h3>Пешком к Marina Bay Sands</h3>
+        <p>Через мост от садов к отелю Marina Bay Sands и дальше к набережной Event Plaza со стороны залива.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">20:00<small>или 21:00, 22:00</small></div>
+      <div class="body">
+        <h3>Шоу Spectra на воде</h3>
+        <p>Свет, лазеры, водяные экраны и музыка над заливом, около 15 минут. В субботу три сеанса. Лучше прийти минут за 10, чтобы встать у воды.</p>
+        <div class="row"><span class="chip">бесплатно</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Event+Plaza+Marina+Bay+Sands">Event Plaza на карте</a> <a class="site" href="https://www.marinabaysands.com/entertainment/spectra.html">сайт</a></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">После</div>
+      <div class="body">
+        <h3>Обратно в отель</h3>
+        <div class="mrt">
+          <span class="stn te"><code>TE20</code>Marina Bay</span><span class="arrow">→</span>
+          <span class="stn te"><code>TE18</code>Maxwell</span>
+        </div>
+        <p class="muted">Набережную с Мерлионом сегодня не смотрим, она будет завтра с гидом.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- ===== 25 октября ===== -->
+<section class="panel" id="d25">
+  <div class="day-head">
+    <div class="eyebrow">25 октября · воскресенье</div>
+    <h2>Экскурсия и сад на выбор</h2>
+    <p>Утром исторический центр с гидом, после обеда оранжереи или орхидеи.</p>
+  </div>
+  <div class="guide">
+    <div class="guide-who">
+      <div class="eyebrow">Гид 25 октября</div>
+      <div class="guide-name">Евгения</div>
+      <div class="guide-phone">+65 9816 4414</div>
+      <div class="muted">Встреча в 10:00 в лобби отеля Carlton City</div>
+    </div>
+    <div class="guide-actions">
+      <a class="btn wa" href="https://wa.me/6598164414">Написать в WhatsApp</a>
+      <a class="btn" href="tel:+6598164414">Позвонить</a>
+    </div>
+  </div>
+  <ol class="timeline">
+    <li class="step">
+      <div class="time">До 09:30</div>
+      <div class="body">
+        <h3>Завтрак в отеле</h3>
+        <p class="muted">Завтрак с 6:30 до 10:30.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">10:00<small>до 14:00</small></div>
+      <div class="body">
+        <h3>Программа с гидом</h3>
+        <p class="muted">Встреча с Евгенией в лобби отеля.</p>
+        <ul>
+          <li><b>Отель Raffles</b>: колониальный дворик. По желанию коктейль Singapore Sling в Long Bar, рецепту больше 100 лет (около S$40). <a class="site" href="https://www.raffles.com/singapore/">сайт</a></li>
+          <li><b>Колониальный район (Civic District)</b>: административные здания колониальной эпохи. <a class="site" href="https://www.visitsingapore.com/see-do-singapore/places-to-see/civic-district/">сайт</a></li>
+          <li><b>Набережная реки Сингапур</b>: деловой центр Raffles Place, старый подвесной мост Кавена, отель Fullerton (бывший главпочтамт). <a class="site" href="https://www.fullertonhotels.com/fullerton-hotel-singapore">сайт</a></li>
+          <li><b>Набережная Мерлиона</b>: панорамный вид на Marina Bay Sands. <a class="site" href="https://www.visitsingapore.com/see-do-singapore/recreation-leisure/viewpoints/merlion-park/">сайт</a></li>
+          <li><b>Чайнатаун</b>: храмы и улочки. <a class="site" href="https://www.visitsingapore.com/see-do-singapore/places-to-see/chinatown/">сайт</a></li>
+        </ul>
+        <div class="row"><span class="chip key">с гидом</span></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">14:00</div>
+      <div class="body">
+        <h3>Обед: Chinatown Complex Food Centre</h3>
+        <p>Экскурсия заканчивается в Чайнатауне, а это самый большой хокер-центр города: больше 200 прилавков. На втором этаже лапша, дим-самы и курица в соевом соусе.</p>
+        <div class="row"><span class="chip">S$4–7 за блюдо</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Chinatown+Complex+Food+Centre">на карте</a></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">15:00<small>~3 часа</small></div>
+      <div class="body">
+        <h3>Сад на выбор</h3>
+        <div class="choice">
+          <div class="opt">
+            <div class="tag">Вариант 1</div>
+            <h3>Оранжереи Flower Dome и Cloud Forest</h3>
+            <p>Два огромных стеклянных купола в Gardens by the Bay. В Flower Dome цветы со всех континентов. Cloud Forest — «облачный лес» с 35-метровым водопадом внутри горы, покрытой растениями.</p>
+            <div class="mrt">
+              <span class="stn dt"><code>DT19</code>Chinatown</span><span class="arrow">→</span>
+              <span class="stn dt"><code>DT16</code>Bayfront</span>
+            </div>
+            <p class="muted">3 остановки, ~10 мин. Открыты 9:00–21:00.</p>
+            <div class="row"><span class="chip paid">~S$46 за обе</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Cloud+Forest+Gardens+by+the+Bay">на карте</a> <a class="site" href="https://www.gardensbythebay.com.sg/en/things-to-do/attractions/flower-dome.html">Flower Dome</a> <a class="site" href="https://www.gardensbythebay.com.sg/en/things-to-do/attractions/cloud-forest.html">Cloud Forest</a></div>
+          </div>
+          <div class="opt">
+            <div class="tag">Вариант 2</div>
+            <h3>Национальный сад орхидей</h3>
+            <p>Внутри Ботанического сада (объект ЮНЕСКО): более 1000 видов орхидей и сорта, названные в честь знаменитостей и глав государств. Сам Ботанический сад бесплатный, с прудами и тропическим лесом.</p>
+            <div class="mrt">
+              <span class="stn dt"><code>DT19</code>Chinatown</span><span class="arrow">→</span>
+              <span class="stn dt"><code>DT9</code>Botanic Gardens</span>
+            </div>
+            <p class="muted">По синей линии без пересадок, ~25 мин. Сад орхидей 8:30–19:00, последний вход в 18:00.</p>
+            <div class="row"><span class="chip paid">~S$15</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=National+Orchid+Garden+Singapore">на карте</a> <a class="site" href="https://sbg.nparks.gov.sg/attractions/national-orchid-garden/">сайт</a></div>
+          </div>
+        </div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">19:00</div>
+      <div class="body">
+        <h3>Ужин: Lau Pa Sat и Satay Street</h3>
+        <p>Викторианский чугунный павильон XIX века среди небоскрёбов. Вечером соседнюю улицу перекрывают, и на ней жарят сатай. Сатай продают наборами от 10 палочек.</p>
+        <p class="muted">По выходным Satay Street работает с 15:00. От отеля 15 минут пешком.</p>
+        <div class="row"><span class="chip">S$8–15 на человека</span><a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Lau+Pa+Sat">на карте</a> <a class="site" href="https://www.laupasat.sg/sataystreet/">сайт</a></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">20:00<small>или 21:00</small></div>
+      <div class="body">
+        <h3>Запасной вариант: шоу Spectra</h3>
+        <p>Если 24-го не успели. В воскресенье два сеанса. От Lau Pa Sat пешком около 20 минут.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- ===== 26 октября ===== -->
+<section class="panel" id="d26">
+  <div class="day-head">
+    <div class="eyebrow">26 октября · понедельник</div>
+    <h2>Вылет в Бангкок</h2>
+    <p>Выезд из отеля за 2,5 часа до вылета.</p>
+  </div>
+  <div class="callout"><b>Накануне вечером:</b> собрать чемоданы и пройти онлайн-регистрацию на сайте или в приложении Scoot. Багаж всё равно нужно сдать на стойке, она закрывается <b>за 60 минут</b> до вылета, без исключений.</div>
+  <ol class="timeline">
+    <li class="step">
+      <div class="time">06:50<small>~25 мин</small></div>
+      <div class="body">
+        <h3>Выезд из отеля на такси или Grab</h3>
+        <p>Такси можно вызвать на ресепшене. Сказать водителю: «Changi Airport, Terminal 1».</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">07:15<small>примерно</small></div>
+      <div class="body">
+        <h3>Терминал 1, стойки Scoot (ряды 5–7)</h3>
+        <p>Сдать багаж (20 кг, уже оплачен), пройти паспортный контроль и досмотр.</p>
+        <div class="row"><span class="chip key">стойка закрывается в 08:20</span></div>
+      </div>
+    </li>
+    <li class="step">
+      <div class="time">09:20</div>
+      <div class="body">
+        <h3>Вылет TR606 в Бангкок</h3>
+        <p class="muted">Прилёт в Суварнабхуми в 10:50 по местному времени.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- ===== Полезное ===== -->
+<section class="panel" id="info">
+  <div class="day-head">
+    <div class="eyebrow">Перед поездкой и на месте</div>
+    <h2>Полезное</h2>
+    <p>Что сделать до вылета и что знать на месте.</p>
+  </div>
+  <div class="info">
+    <div class="card">
+      <h3>До вылета: SG Arrival Card</h3>
+      <ul>
+        <li>Электронная карта прибытия <b>обязательна</b>. Без неё авиакомпания может не посадить на рейс.</li>
+        <li>Подать можно только <b>за 3 дня до прилёта</b>, то есть с 22 октября. Удобнее всего 22-го вечером, до вылета из Москвы.</li>
+        <li>Только на официальном сайте ICA (ica.gov.sg) или в приложении MyICA. Это <b>бесплатно</b>, сайты, которые просят оплату, — мошенники.</li>
+        <li>Гражданам России виза не нужна, можно находиться до 30 дней.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Деньги</h3>
+      <ul>
+        <li>Карты российских банков в Сингапуре не работают. Возьмите наличные <b>доллары или евро</b>.</li>
+        <li>Обменять выгоднее в городе, чем в аэропорту: в Чайнатауне или в торговой галерее у станции Raffles Place. В аэропорту разменяйте немного, на первый день.</li>
+        <li>На хокер-центрах платят наличными, лучше мелкими купюрами.</li>
+        <li>Чаевые не нужны: в кафе и ресторанах уже включён сервисный сбор.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Транспорт</h3>
+      <ul>
+        <li><b>Карта EZ-Link</b> для метро и автобусов. Продаётся в кассах метро (в аэропорту — на станции Changi Airport) и в 7-Eleven, около S$10, из них S$5 на балансе. Пополняется наличными в автоматах на станциях.</li>
+        <li>Поездка на метро обычно стоит S$1–2,5. Метро работает примерно с 5:30 до полуночи.</li>
+        <li>Такси и Grab: в приложении Grab можно выбрать оплату наличными. В такси из очереди наличные тоже принимают.</li>
+        <li>Цвета линий на этой странице совпадают со схемой метро: <span class="stn te"><code>TE</code></span> коричневая, <span class="stn dt"><code>DT</code></span> синяя, <span class="stn ew"><code>EW</code></span> зелёная.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Связь</h3>
+      <ul>
+        <li><b>eSIM</b> купите и установите дома, до вылета. В Сингапуре останется только включить её: Настройки → Сотовая связь → выбрать eSIM и включить роуминг данных.</li>
+        <li>Запасной вариант: туристические SIM-карты Singtel, StarHub и M1 в зале прилёта, около S$15, нужен паспорт.</li>
+        <li>В аэропорту и во многих торговых центрах бесплатный Wi-Fi.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Хокер-центры: как это устроено</h3>
+      <ul>
+        <li>Сначала найдите стол. Пачка салфеток на столе означает «занято», это местный обычай.</li>
+        <li>Заказ делается у прилавка, там же оплата. Номер стола иногда просят назвать, тогда еду принесут.</li>
+        <li>После еды верните поднос на стойку, за оставленную посуду штрафуют.</li>
+        <li>Кофе и чай заказывают особыми словами: <b>kopi</b> — кофе со сгущёнкой, <b>kopi-O</b> — чёрный с сахаром, <b>kopi-O kosong</b> — чёрный без сахара, <b>teh tarik</b> — взбитый чай с молоком.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Правила и штрафы</h3>
+      <ul>
+        <li>В метро нельзя есть и пить, даже воду. Штраф до S$500.</li>
+        <li><b>Вейпы и электронные сигареты запрещены</b>, их нельзя даже ввозить. Штрафы крупные, вещи конфискуют.</li>
+        <li>Курить можно только в специальных зонах, они отмечены жёлтой разметкой.</li>
+        <li>Жвачку продавать и ввозить нельзя. Мусорить, переходить дорогу в неположенном месте — штраф.</li>
+        <li>Дуриан нельзя проносить в метро и в большинство отелей.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Погода и мелочи</h3>
+      <dl class="kv">
+        <dt>Погода</dt><dd>+25…+32 °C, влажно. После обеда часто короткие ливни с грозой, нужен зонт.</dd>
+        <dt>Одежда</dt><dd>Лёгкая. В метро и торговых центрах сильные кондиционеры, пригодится кофта.</dd>
+        <dt>Розетки</dt><dd>Британские, тип G, 230 В. Нужен переходник.</dd>
+        <dt>Время</dt><dd>Москва +5 часов.</dd>
+        <dt>Вода</dt><dd>Из-под крана пить можно.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>Экстренные номера</h3>
+      <dl class="kv">
+        <dt>Полиция</dt><dd>999</dd>
+        <dt>Скорая, пожарные</dt><dd>995</dd>
+        <dt>Посольство России</dt><dd>51 Nassim Road · +65 6235 1832</dd>
+        <dt>Отель</dt><dd>Carlton City Hotel, 1 Gopeng Street</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<p class="foot">Часы работы и цены ориентировочные, проверены 13 октября 2026 года. Перед поездкой стоит перепроверить на официальных сайтах.</p>
+</div>
+
+<script>
+// Скрипт только выбирает вкладку при открытии; переключение работает и без него.
+(function () {
+  var ids = ['d24', 'd25', 'd26', 'info'];
+  function pick(id) { var r = document.getElementById('r-' + id); if (r) r.checked = true; }
+  ids.forEach(function (id) {
+    var r = document.getElementById('r-' + id);
+    r.addEventListener('change', function () {
+      try { localStorage.setItem('sg-tab', id); } catch (e) {}
+      var nav = document.querySelector('.tabs');
+      if (nav.getBoundingClientRect().top <= 1) window.scrollTo(0, nav.offsetTop - 4);
+    });
+  });
+  // #d24 / #d25 / #d26 / #info в адресе, иначе сегодняшний день поездки, иначе последняя открытая вкладка
+  var start = location.hash.slice(1);
+  if (ids.indexOf(start) < 0) {
+    var now = new Date();
+    if (now.getFullYear() === 2026 && now.getMonth() === 9 && now.getDate() >= 24 && now.getDate() <= 26) start = 'd' + now.getDate();
+    else { try { start = localStorage.getItem('sg-tab') || ''; } catch (e) { start = ''; } }
+  }
+  if (ids.indexOf(start) >= 0) pick(start);
+})();
+</script>
+<script>
+// С 6 ноября 2026 (по Сингапуру) страница показывает «Доступ закрыт» вместо памятки.
+(function () {
+  if (Date.now() >= Date.UTC(2026, 10, 5, 16, 0)) {
+    document.title = 'Доступ закрыт';
+    document.body.innerHTML = '<div class="wrap" style="padding-block:30vh;text-align:center">'
+      + '<h1>Доступ к памятке закрыт</h1><p class="sub">Поездка в Сингапур завершилась 26 октября 2026 года.</p></div>';
+  }
+})();
+</script>
+
+</body>
+</html>
