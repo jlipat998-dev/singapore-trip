@@ -177,6 +177,16 @@ dl.kv dd { margin: 0; min-width: 0; }
   @keyframes fade { from { opacity: .4; } to { opacity: 1; } }
 }
 </style>
+<style>
+.tickets .btn { cursor: pointer; }
+.tickets .btn.open { background: var(--accent); color: var(--surface); }
+.ticket-img { display: block; flex-basis: 100%; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.unlock { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 14px 16px; }
+.unlock form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.unlock label { flex-basis: 100%; font-weight: 600; }
+.unlock input { flex: 1 1 160px; min-width: 0; font: 16px var(--font-body); padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+.unlock p { margin: 0; flex-basis: 100%; font-size: 14px; color: var(--muted); }
+</style>
 
 </head>
 <body>
@@ -190,13 +200,26 @@ dl.kv dd { margin: 0; min-width: 0; }
 </header>
 
 <section class="flights" aria-label="Рейсы">
+  <div class="unlock" id="unlock" hidden>
+    <form id="unlock-form">
+      <label for="pw">Билеты защищены паролем</label>
+      <input id="pw" type="password" autocomplete="current-password" placeholder="Пароль">
+      <button class="btn" type="submit">Открыть билеты</button>
+      <p id="pw-msg" aria-live="polite"></p>
+    </form>
+  </div>
   <div class="pass">
     <div class="dir">Прилёт · сб, 24 октября</div>
     <div class="code">TK208</div>
     <div class="route">Стамбул → Сингапур</div>
     <div></div>
     <div class="meta">Прилёт в <b>09:30</b>, Changi <b>Терминал 1</b> · Turkish Airlines · багаж 25 кг</div>
-    <div class="note-inline">Билеты — в файле singapore.html, который вам переслали.</div>
+    
+    <div class="tickets">
+      <button class="btn" type="button" data-ticket="t0" data-alt="Билет TK208, Сергей">Билет · Сергей</button>
+      <button class="btn" type="button" data-ticket="t1" data-alt="Билет TK208, Андрей">Билет · Андрей</button>
+    </div>
+    
   </div>
   <div class="pass">
     <div class="dir">Вылет · пн, 26 октября</div>
@@ -204,7 +227,12 @@ dl.kv dd { margin: 0; min-width: 0; }
     <div class="route">Сингапур → Бангкок</div>
     <div></div>
     <div class="meta">Вылет в <b>09:20</b>, Changi <b>Терминал 1</b>, стойки Scoot ряды 5–7 · багаж 20 кг сдать до <b>08:20</b></div>
-    <div class="note-inline">Билеты — в файле singapore.html, который вам переслали.</div>
+    
+    <div class="tickets">
+      <button class="btn" type="button" data-ticket="t2" data-alt="Билет TR606, Сергей">Билет · Сергей</button>
+      <button class="btn" type="button" data-ticket="t3" data-alt="Билет TR606, Андрей">Билет · Андрей</button>
+    </div>
+    
   </div>
 </section>
 
@@ -570,6 +598,57 @@ dl.kv dd { margin: 0; min-width: 0; }
     else { try { start = localStorage.getItem('sg-tab') || ''; } catch (e) { start = ''; } }
   }
   if (ids.indexOf(start) >= 0) pick(start);
+})();
+</script>
+<script>
+// Билеты лежат в tickets.enc, зашифрованные паролем (PBKDF2 + AES-CBC). Расшифровка — только в браузере.
+(function () {
+  var box = document.getElementById('unlock'), pw = document.getElementById('pw'), msg = document.getElementById('pw-msg');
+  if (!box) return;
+  var tickets = null, pending = null;
+  function bytes(b64) { var s = atob(b64), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+  function norm(p) { return p.trim().toLowerCase().normalize('NFC'); }
+  async function decrypt(pass) {
+    var enc = await (await fetch('tickets.enc', { cache: 'no-cache' })).json();
+    var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(norm(pass)), 'PBKDF2', false, ['deriveKey']);
+    var key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: bytes(enc.salt), iterations: enc.iter, hash: 'SHA-256' },
+      base, { name: 'AES-CBC', length: 256 }, false, ['decrypt']);
+    var plain = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: bytes(enc.iv) }, key, bytes(enc.data));
+    var obj = JSON.parse(new TextDecoder().decode(plain));
+    if (obj.ok !== 'sg') throw new Error('bad');
+    return obj.t;
+  }
+  function toggle(btn) {
+    var img = btn.nextElementSibling;
+    if (!img || !img.classList.contains('ticket-img')) {
+      img = document.createElement('img');
+      img.className = 'ticket-img'; img.alt = btn.getAttribute('data-alt');
+      img.src = 'data:image/jpeg;base64,' + tickets[btn.getAttribute('data-ticket')];
+      btn.after(img); btn.classList.add('open'); return;
+    }
+    img.hidden = !img.hidden; btn.classList.toggle('open', !img.hidden);
+  }
+  async function tryUnlock(pass, quiet) {
+    try {
+      tickets = await decrypt(pass);
+      try { localStorage.setItem('sg-pw', pass); } catch (e) {}
+      box.hidden = true;
+      if (pending) { toggle(pending); pending = null; }
+    } catch (e) {
+      tickets = null;
+      if (!quiet) { msg.textContent = 'Пароль не подошёл. Проверьте и попробуйте ещё раз.'; pw.select(); }
+    }
+  }
+  document.querySelectorAll('button[data-ticket]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (tickets) return toggle(btn);
+      pending = btn; box.hidden = false; msg.textContent = ''; pw.focus();
+    });
+  });
+  document.getElementById('unlock-form').addEventListener('submit', function (e) {
+    e.preventDefault(); msg.textContent = 'Открываю…'; tryUnlock(pw.value, false);
+  });
+  try { var saved = localStorage.getItem('sg-pw'); if (saved) tryUnlock(saved, true); } catch (e) {}
 })();
 </script>
 <script>
