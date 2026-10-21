@@ -185,6 +185,7 @@ dl.kv dd { margin: 0; min-width: 0; }
 .unlock form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .unlock label { flex-basis: 100%; font-weight: 600; }
 .unlock input { flex: 1 1 160px; min-width: 0; font: 16px var(--font-body); padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+.pw-input { -webkit-text-security: disc; }
 .unlock p { margin: 0; flex-basis: 100%; font-size: 14px; color: var(--muted); }
 </style>
 
@@ -199,11 +200,11 @@ dl.kv dd { margin: 0; min-width: 0; }
   <div class="sub">Отель Carlton City Hotel Singapore, 1 Gopeng Street (Tanjong Pagar) · <a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Carlton+City+Hotel+Singapore">на карте</a> <a class="site" href="https://www.carltoncity.sg/">сайт</a></div>
 </header>
 
-<section class="flights" aria-label="Рейсы">
+<section class="flights" aria-label="Рейсы и страховка">
   <div class="unlock" id="unlock" hidden>
     <form id="unlock-form">
       <label for="pw">Билеты и страховки защищены паролем</label>
-      <input id="pw" type="password" autocomplete="current-password" placeholder="Пароль">
+      <input id="pw" type="text" class="pw-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Пароль">
       <button class="btn" type="submit">Открыть документы</button>
       <p id="pw-msg" aria-live="polite"></p>
     </form>
@@ -231,6 +232,21 @@ dl.kv dd { margin: 0; min-width: 0; }
     <div class="tickets">
       <button class="btn" type="button" data-ticket="t2" data-alt="Билет · Сергей">Билет · Сергей</button>
       <button class="btn" type="button" data-ticket="t3" data-alt="Билет · Андрей">Билет · Андрей</button>
+    </div>
+    
+  </div>
+  <div class="pass">
+    <div class="dir">Медицинская страховка</div>
+    <div class="code">100 000 €</div>
+    <div class="route">Сингапур и Таиланд</div>
+    <div></div>
+    <div class="meta">АльфаСтрахование · Сингапур <b>24–26.10</b> · Таиланд <b>26.10–05.11</b><br>Если нужен врач, сначала звонок: <b>+7 495 775 09 96</b></div>
+    
+    <div class="tickets">
+      <button class="btn" type="button" data-ticket="t4" data-alt="Полис Сингапур · Сергей">Полис Сингапур · Сергей</button>
+      <button class="btn" type="button" data-ticket="t5" data-alt="Полис Сингапур · Андрей">Полис Сингапур · Андрей</button>
+      <button class="btn" type="button" data-ticket="t6" data-alt="Полис Таиланд · Сергей">Полис Таиланд · Сергей</button>
+      <button class="btn" type="button" data-ticket="t7" data-alt="Полис Таиланд · Андрей">Полис Таиланд · Андрей</button>
     </div>
     
   </div>
@@ -500,21 +516,13 @@ dl.kv dd { margin: 0; min-width: 0; }
   <div class="info">
     <div class="card">
       <h3>Медицинская страховка</h3>
-      <p>АльфаСтрахование, программа «Классик», медицинские расходы до 100 000 €. Полисы на каждого: Сингапур 24–26 октября, Таиланд 26 октября – 5 ноября.</p>
+      <p>АльфаСтрахование, программа «Классик», медицинские расходы до 100 000 €. Полисы на каждого: Сингапур 24–26 октября, Таиланд 26 октября – 5 ноября. Сами полисы — в блоке вверху страницы, под рейсами.</p>
       <div class="callout"><b>Если нужен врач:</b> сначала позвонить в сервисную компанию, и только потом идти в клинику. Расходы без согласования страховая не оплачивает.</div>
       <dl class="kv">
         <dt>Телефон 24/7</dt><dd class="guide-phone">+7 495 775 09 96</dd>
         <dt>Сайт помощи</dt><dd><a href="https://alfa.gva.ru">alfa.gva.ru</a></dd>
         <dt>Что сказать</dt><dd>Имя и фамилию, номер полиса, где вы находитесь, телефон для связи, что случилось.</dd>
       </dl>
-      
-      <div class="tickets">
-        <button class="btn" type="button" data-ticket="t4" data-alt="Полис Сингапур · Сергей">Полис Сингапур · Сергей</button>
-        <button class="btn" type="button" data-ticket="t5" data-alt="Полис Сингапур · Андрей">Полис Сингапур · Андрей</button>
-        <button class="btn" type="button" data-ticket="t6" data-alt="Полис Таиланд · Сергей">Полис Таиланд · Сергей</button>
-        <button class="btn" type="button" data-ticket="t7" data-alt="Полис Таиланд · Андрей">Полис Таиланд · Андрей</button>
-      </div>
-      
     </div>
     <div class="card">
       <h3>До вылета: SG Arrival Card</h3>
@@ -625,7 +633,13 @@ dl.kv dd { margin: 0; min-width: 0; }
   if (!box) return;
   var tickets = null, pending = null;
   function bytes(b64) { var s = atob(b64), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
-  function norm(p) { return p.trim().toLowerCase().normalize('NFC'); }
+  // Если пароль набран на английской раскладке («cbyufgeh»), переводим буквы в русские по положению клавиш.
+  var EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`", RU = 'йцукенгшщзхъфывапролджэячсмитьбюё';
+  function norm(p) {
+    p = p.trim().toLowerCase().normalize('NFC');
+    if (/[а-яё]/.test(p)) return p;
+    return p.split('').map(function (c) { var i = EN.indexOf(c); return i < 0 ? c : RU[i]; }).join('');
+  }
   async function decrypt(pass) {
     var enc = await (await fetch('tickets.enc', { cache: 'no-cache' })).json();
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(norm(pass)), 'PBKDF2', false, ['deriveKey']);
