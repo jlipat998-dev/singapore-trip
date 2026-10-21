@@ -202,9 +202,9 @@ dl.kv dd { margin: 0; min-width: 0; }
 <section class="flights" aria-label="Рейсы">
   <div class="unlock" id="unlock" hidden>
     <form id="unlock-form">
-      <label for="pw">Билеты защищены паролем</label>
+      <label for="pw">Билеты и страховки защищены паролем</label>
       <input id="pw" type="password" autocomplete="current-password" placeholder="Пароль">
-      <button class="btn" type="submit">Открыть билеты</button>
+      <button class="btn" type="submit">Открыть документы</button>
       <p id="pw-msg" aria-live="polite"></p>
     </form>
   </div>
@@ -216,8 +216,8 @@ dl.kv dd { margin: 0; min-width: 0; }
     <div class="meta">Прилёт в <b>09:30</b>, Changi <b>Терминал 1</b> · Turkish Airlines · багаж 25 кг</div>
     
     <div class="tickets">
-      <button class="btn" type="button" data-ticket="t0" data-alt="Билет TK208, Сергей">Билет · Сергей</button>
-      <button class="btn" type="button" data-ticket="t1" data-alt="Билет TK208, Андрей">Билет · Андрей</button>
+      <button class="btn" type="button" data-ticket="t0" data-alt="Билет · Сергей">Билет · Сергей</button>
+      <button class="btn" type="button" data-ticket="t1" data-alt="Билет · Андрей">Билет · Андрей</button>
     </div>
     
   </div>
@@ -229,8 +229,8 @@ dl.kv dd { margin: 0; min-width: 0; }
     <div class="meta">Вылет в <b>09:20</b>, Changi <b>Терминал 1</b>, стойки Scoot ряды 5–7 · багаж 20 кг сдать до <b>08:20</b></div>
     
     <div class="tickets">
-      <button class="btn" type="button" data-ticket="t2" data-alt="Билет TR606, Сергей">Билет · Сергей</button>
-      <button class="btn" type="button" data-ticket="t3" data-alt="Билет TR606, Андрей">Билет · Андрей</button>
+      <button class="btn" type="button" data-ticket="t2" data-alt="Билет · Сергей">Билет · Сергей</button>
+      <button class="btn" type="button" data-ticket="t3" data-alt="Билет · Андрей">Билет · Андрей</button>
     </div>
     
   </div>
@@ -499,6 +499,24 @@ dl.kv dd { margin: 0; min-width: 0; }
   </div>
   <div class="info">
     <div class="card">
+      <h3>Медицинская страховка</h3>
+      <p>АльфаСтрахование, программа «Классик», медицинские расходы до 100 000 €. Полисы на каждого: Сингапур 24–26 октября, Таиланд 26 октября – 5 ноября.</p>
+      <div class="callout"><b>Если нужен врач:</b> сначала позвонить в сервисную компанию, и только потом идти в клинику. Расходы без согласования страховая не оплачивает.</div>
+      <dl class="kv">
+        <dt>Телефон 24/7</dt><dd class="guide-phone">+7 495 775 09 96</dd>
+        <dt>Сайт помощи</dt><dd><a href="https://alfa.gva.ru">alfa.gva.ru</a></dd>
+        <dt>Что сказать</dt><dd>Имя и фамилию, номер полиса, где вы находитесь, телефон для связи, что случилось.</dd>
+      </dl>
+      
+      <div class="tickets">
+        <button class="btn" type="button" data-ticket="t4" data-alt="Полис Сингапур · Сергей">Полис Сингапур · Сергей</button>
+        <button class="btn" type="button" data-ticket="t5" data-alt="Полис Сингапур · Андрей">Полис Сингапур · Андрей</button>
+        <button class="btn" type="button" data-ticket="t6" data-alt="Полис Таиланд · Сергей">Полис Таиланд · Сергей</button>
+        <button class="btn" type="button" data-ticket="t7" data-alt="Полис Таиланд · Андрей">Полис Таиланд · Андрей</button>
+      </div>
+      
+    </div>
+    <div class="card">
       <h3>До вылета: SG Arrival Card</h3>
       <ul>
         <li>Электронная карта прибытия <b>обязательна</b>. Без неё авиакомпания может не посадить на рейс.</li>
@@ -601,7 +619,7 @@ dl.kv dd { margin: 0; min-width: 0; }
 })();
 </script>
 <script>
-// Билеты лежат в tickets.enc, зашифрованные паролем (PBKDF2 + AES-CBC). Расшифровка — только в браузере.
+// Билеты и страховки лежат в tickets.enc, зашифрованные паролем (PBKDF2 + AES-CBC). Расшифровка — только в браузере.
 (function () {
   var box = document.getElementById('unlock'), pw = document.getElementById('pw'), msg = document.getElementById('pw-msg');
   if (!box) return;
@@ -642,7 +660,7 @@ dl.kv dd { margin: 0; min-width: 0; }
   document.querySelectorAll('button[data-ticket]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       if (tickets) return toggle(btn);
-      pending = btn; box.hidden = false; msg.textContent = ''; pw.focus();
+      pending = btn; btn.closest('.tickets').after(box); box.hidden = false; msg.textContent = ''; pw.focus();
     });
   });
   document.getElementById('unlock-form').addEventListener('submit', function (e) {
